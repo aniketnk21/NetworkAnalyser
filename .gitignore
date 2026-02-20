@@ -1,0 +1,77 @@
+# Created for Visual Studio WPF (.NET 8 / Framework) projects
+
+## Visual Studio / VS Code
+.vs/
+.vscode/
+!.vs/Razor/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+## Build Results
+**/bin/
+**/obj/
+**/[Bb]in/
+**/[Oo]bj/
+
+## Dependencies
+packages/
+node_modules/
+
+## User Files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+*.cache
+*.vspscc
+*.vssscc
+._*
+
+## Logs
+logs/
+*.log
+[Ll]ogs/
+
+## NuGet
+*.nupkg
+# NuGet v3's project.json files produces json cache files
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## WPF Specific
+**/App_Packages/
+**/DesignTimeResolveAssemblyReferences.cache
+**/DesignTimeResolveAssemblyReferencesInput.cache
+
+## Publish
+**/publish/
+**/app.publish/
+**/Properties/PublishProfiles/
+
+## Test Results
+**/[Tt]est[Rr]esult*/
+**/[Tt]est[rR]esults*/
+TestResult.xml
+
+## SQL Server LocalDB (for your Weather app)
+**/*.mdf
+**/*.ldf
+**/*.sdf
+
+## SQLite (for your Weather app)
+**/*.db
+**/*.db-shm
+**/*.db-wal
+
+# Keep project files
+!**/*.csproj
+!**/*.sln

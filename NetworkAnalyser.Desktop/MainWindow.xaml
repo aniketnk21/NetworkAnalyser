@@ -1,0 +1,475 @@
+﻿<Window x:Class="NetworkAnalyser.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:helpers="clr-namespace:NetworkAnalyser.Desktop.Helpers"
+        mc:Ignorable="d"
+        Title="Network Analyser — Traffic Monitor"
+        Height="820" Width="1280" MinHeight="650" MinWidth="900"
+        Background="{StaticResource BgDarkBrush}"
+        WindowStartupLocation="CenterScreen"
+        Icon="/Icon/app_icon.ico">
+
+    <Window.Resources>
+        <helpers:SuspiciousToColorConverter x:Key="SuspiciousToColor" />
+        <helpers:BytesToReadableConverter x:Key="BytesToReadable" />
+        <helpers:BoolToVisibilityConverter x:Key="BoolToVisibility" />
+        <helpers:StateToColorConverter x:Key="StateToColor" />
+        <helpers:BoolToStatusTextConverter x:Key="BoolToStatusText" />
+        <helpers:BoolToStatusColorConverter x:Key="BoolToStatusColor" />
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />  <!-- Header -->
+            <RowDefinition Height="Auto" />  <!-- Dashboard Cards -->
+            <RowDefinition Height="*" />     <!-- Main Content -->
+            <RowDefinition Height="Auto" />  <!-- Status Bar -->
+        </Grid.RowDefinitions>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- HEADER BAR -->
+        <!-- ═══════════════════════════════════════ -->
+        <Border Grid.Row="0" Background="{StaticResource BgPanelBrush}"
+                BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,0,0,1"
+                Padding="20,14">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- App Title -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="🛡️" FontSize="22" Margin="0,0,10,0" VerticalAlignment="Center" />
+                    <StackPanel>
+                        <TextBlock Text="Network Analyser" FontSize="18" FontWeight="Bold"
+                                   Foreground="{StaticResource TextPrimaryBrush}" />
+                        <TextBlock Text="Real-time Traffic Monitor" FontSize="11"
+                                   Foreground="{StaticResource TextMutedBrush}" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Search Box -->
+                <TextBox Grid.Column="1" Style="{StaticResource SearchBox}"
+                         Text="{Binding SearchFilter, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="30,0" MaxWidth="350" HorizontalAlignment="Center"
+                         VerticalAlignment="Center">
+                    <TextBox.ToolTip>Filter by process name or remote address</TextBox.ToolTip>
+                </TextBox>
+
+                <!-- Monitoring Status -->
+                <TextBlock Grid.Column="2" FontSize="13" FontWeight="SemiBold"
+                           VerticalAlignment="Center" Margin="0,0,16,0"
+                           Text="{Binding IsMonitoring, Converter={StaticResource BoolToStatusText}}"
+                           Foreground="{Binding IsMonitoring, Converter={StaticResource BoolToStatusColor}}" />
+
+                <!-- Start/Stop Button -->
+                <Button Grid.Column="3" Style="{StaticResource ModernButton}"
+                        Command="{Binding ToggleMonitoringCommand}"
+                        Margin="0,0,8,0">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{Binding IsMonitoring, Converter={StaticResource BoolToStatusText}, ConverterParameter=Button}"
+                                   Visibility="Collapsed" />
+                        <TextBlock>
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Text" Value="▶  Start Monitoring" />
+                                    <Setter Property="Foreground" Value="White" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsMonitoring}" Value="True">
+                                            <Setter Property="Text" Value="⏹  Stop" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                    </StackPanel>
+                </Button>
+
+                <!-- Clear Logs Button -->
+                <Button Grid.Column="4" Style="{StaticResource DangerButton}"
+                        Command="{Binding ClearLogsCommand}"
+                        Padding="14,10">
+                    <TextBlock Text="🗑  Clear" Foreground="White" />
+                </Button>
+            </Grid>
+        </Border>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- DASHBOARD CARDS -->
+        <!-- ═══════════════════════════════════════ -->
+        <UniformGrid Grid.Row="1" Columns="4" Margin="16,14,16,6">
+            <!-- Active Connections -->
+            <Border Background="{StaticResource BgCardBrush}"  CornerRadius="10"
+                    Margin="4" Padding="18,14"
+                    BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="ACTIVE CONNECTIONS" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6" />
+                    <TextBlock Text="{Binding ActiveConnectionCount}" FontSize="32" FontWeight="Bold"
+                               Foreground="{StaticResource AccentBlueBrush}" />
+                    <TextBlock Text="live TCP connections" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Unique Processes -->
+            <Border Background="{StaticResource BgCardBrush}"  CornerRadius="10"
+                    Margin="4" Padding="18,14"
+                    BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="UNIQUE PROCESSES" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6" />
+                    <TextBlock Text="{Binding UniqueProcessCount}" FontSize="32" FontWeight="Bold"
+                               Foreground="{StaticResource AccentPurpleBrush}" />
+                    <TextBlock Text="apps with network activity" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Suspicious -->
+            <Border CornerRadius="10" Margin="4" Padding="18,14"
+                    BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding SuspiciousCount}" Value="0">
+                                <Setter Property="Background" Value="{StaticResource BgCardBrush}" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <StackPanel>
+                    <TextBlock Text="⚠  SUSPICIOUS" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6" />
+                    <TextBlock Text="{Binding SuspiciousCount}" FontSize="32" FontWeight="Bold"
+                               Foreground="{StaticResource AccentRedBrush}" />
+                    <TextBlock Text="flagged connections" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+
+            <!-- Log Entries -->
+            <Border Background="{StaticResource BgCardBrush}"  CornerRadius="10"
+                    Margin="4" Padding="18,14"
+                    BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="LOG ENTRIES" FontSize="10" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6" />
+                    <TextBlock Text="{Binding TotalLogEntries}" FontSize="32" FontWeight="Bold"
+                               Foreground="{StaticResource AccentGreenBrush}" />
+                    <TextBlock Text="{Binding LastCleanupInfo}" FontSize="11"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                </StackPanel>
+            </Border>
+        </UniformGrid>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- MAIN TABBED CONTENT -->
+        <!-- ═══════════════════════════════════════ -->
+        <TabControl Grid.Row="2" Margin="16,8,16,8">
+            <!-- ─── Active Connections Tab ─── -->
+            <TabItem Header="🔌  Active Connections">
+                <DataGrid ItemsSource="{Binding ActiveConnections}"
+                          Margin="0,4,0,0">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <Setter Property="Background" Value="{Binding IsSuspicious, Converter={StaticResource SuspiciousToColor}}" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Process" Binding="{Binding ProcessName}" Width="140">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="PID" Binding="{Binding ProcessId}" Width="65">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Local Endpoint" Binding="{Binding LocalEndpoint}" Width="170">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTemplateColumn Header="Remote Server" Width="200">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding RemoteEndpoint}"
+                                            Command="{Binding DataContext.SearchIpAddressCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding RemoteAddress}"
+                                            Cursor="Hand" Background="Transparent" BorderThickness="0" Padding="0"
+                                            VerticalAlignment="Center">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <TextBlock Text="{TemplateBinding Content}"
+                                                           FontFamily="Consolas"
+                                                           Foreground="{StaticResource AccentBlueBrush}"
+                                                           TextDecorations="Underline"
+                                                           VerticalAlignment="Center"
+                                                           Cursor="Hand" />
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="State" Binding="{Binding State}" Width="110">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{Binding State, Converter={StaticResource StateToColor}}" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Protocol" Binding="{Binding Protocol}" Width="70">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss}" Width="80">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="⚠" Binding="{Binding SuspiciousReason}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource AccentOrangeBrush}" />
+                                    <Setter Property="FontSize" Value="11" />
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- ─── Traffic Logs Tab ─── -->
+            <TabItem Header="📋  Traffic Logs">
+                <DataGrid ItemsSource="{Binding TrafficLogs}"
+                          Margin="0,4,0,0">
+                    <DataGrid.RowStyle>
+                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                            <Setter Property="Background" Value="{Binding IsSuspicious, Converter={StaticResource SuspiciousToColor}}" />
+                        </Style>
+                    </DataGrid.RowStyle>
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="110">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontFamily" Value="Consolas" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Process" Binding="{Binding ProcessName}" Width="140">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Action" Binding="{Binding Action}" Width="110">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource AccentGreenBrush}" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTemplateColumn Header="Remote Server" Width="180">
+                            <DataGridTemplateColumn.CellTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding RemoteAddress}"
+                                            Command="{Binding DataContext.SearchIpAddressCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                            CommandParameter="{Binding RemoteAddress}"
+                                            Cursor="Hand" Background="Transparent" BorderThickness="0" Padding="0"
+                                            VerticalAlignment="Center">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <TextBlock Text="{TemplateBinding Content}"
+                                                           FontFamily="Consolas"
+                                                           Foreground="{StaticResource AccentBlueBrush}"
+                                                           TextDecorations="Underline"
+                                                           VerticalAlignment="Center"
+                                                           Cursor="Hand" />
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </DataTemplate>
+                            </DataGridTemplateColumn.CellTemplate>
+                        </DataGridTemplateColumn>
+                        <DataGridTextColumn Header="Port" Binding="{Binding RemotePort}" Width="70">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                        <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="*">
+                            <DataGridTextColumn.ElementStyle>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                                    <Setter Property="TextWrapping" Value="Wrap" />
+                                    <Setter Property="VerticalAlignment" Value="Center" />
+                                </Style>
+                            </DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </TabItem>
+
+            <!-- ─── Suspicious Activity Tab ─── -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="🚨  Suspicious " />
+                        <Border Background="{StaticResource AccentRedBrush}" CornerRadius="8"
+                                Padding="6,2" VerticalAlignment="Center"
+                                Visibility="{Binding SuspiciousCount, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="{Binding SuspiciousCount}" FontSize="11"
+                                       FontWeight="Bold" Foreground="White" />
+                        </Border>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Warning Banner -->
+                    <Border Grid.Row="0" Background="#33F85149" CornerRadius="8"
+                            Margin="8,8,8,4" Padding="16,10">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚠️" FontSize="16" Margin="0,0,10,0" VerticalAlignment="Center" />
+                            <StackPanel>
+                                <TextBlock Text="Suspicious connections are flagged based on unusual ports, known-malware ports, and scripting engine network activity."
+                                           FontSize="12" Foreground="{StaticResource AccentOrangeBrush}" TextWrapping="Wrap" />
+                                <TextBlock Text="Not all flagged items are threats — review each carefully."
+                                           FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <DataGrid Grid.Row="1" ItemsSource="{Binding SuspiciousAlerts}"
+                              Margin="0,4,0,0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss}" Width="90">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontFamily" Value="Consolas" />
+                                        <Setter Property="Foreground" Value="{StaticResource AccentRedBrush}" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Process" Binding="{Binding ProcessName}" Width="140">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                        <Setter Property="Foreground" Value="{StaticResource AccentRedBrush}" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTemplateColumn Header="Remote Server" Width="180">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="{Binding RemoteAddress}"
+                                                Command="{Binding DataContext.SearchIpAddressCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}"
+                                                CommandParameter="{Binding RemoteAddress}"
+                                                Cursor="Hand" Background="Transparent" BorderThickness="0" Padding="0"
+                                                VerticalAlignment="Center">
+                                            <Button.Template>
+                                                <ControlTemplate TargetType="Button">
+                                                    <TextBlock Text="{TemplateBinding Content}"
+                                                               FontFamily="Consolas"
+                                                               Foreground="{StaticResource AccentOrangeBrush}"
+                                                               TextDecorations="Underline"
+                                                               VerticalAlignment="Center"
+                                                               Cursor="Hand" />
+                                                </ControlTemplate>
+                                            </Button.Template>
+                                        </Button>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Port" Binding="{Binding RemotePort}" Width="70">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource AccentRedBrush}" />
+                                        <Setter Property="FontWeight" Value="Bold" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Details" Binding="{Binding Details}" Width="*">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}" />
+                                        <Setter Property="TextWrapping" Value="Wrap" />
+                                        <Setter Property="VerticalAlignment" Value="Center" />
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- ═══════════════════════════════════════ -->
+        <!-- STATUS BAR -->
+        <!-- ═══════════════════════════════════════ -->
+        <Border Grid.Row="3" Background="{StaticResource BgPanelBrush}"
+                BorderBrush="{StaticResource BorderDarkBrush}" BorderThickness="0,1,0,0"
+                Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}"
+                           FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                           VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" FontSize="11"
+                           Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center">
+                    <Run Text="Auto-cleanup: every 30 min  •  DB: " />
+                    <Run Text="{Binding LastCleanupInfo, Mode=OneWay}" />
+                </TextBlock>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
