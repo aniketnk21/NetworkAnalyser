@@ -178,7 +178,9 @@ public class DatabaseService : IDisposable
 
     public void Dispose()
     {
-        _connection?.Close();
-        _connection?.Dispose();
+        var conn = _connection;
+        _connection = null;
+        conn?.Close();
+        conn?.Dispose();
     }
 }

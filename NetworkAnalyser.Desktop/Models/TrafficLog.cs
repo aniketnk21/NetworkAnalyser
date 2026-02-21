@@ -14,4 +14,5 @@ public partial class TrafficLog : ObservableObject
     [ObservableProperty] private DateTime _timestamp = DateTime.Now;
     [ObservableProperty] private string _details = string.Empty;
     [ObservableProperty] private bool _isSuspicious;
+    [ObservableProperty] private string _remoteCountry = string.Empty;
 }

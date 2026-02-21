@@ -9,6 +9,7 @@ public partial class App : Application
     private DatabaseService? _db;
     private NetworkMonitorService? _monitor;
     private LogCleanupService? _cleanup;
+    private GeoIpService? _geoIp;
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -18,7 +19,10 @@ public partial class App : Application
         _db = new DatabaseService();
         _db.Initialize();
 
-        _monitor = new NetworkMonitorService(_db);
+        _geoIp = new GeoIpService();
+        _geoIp.Initialize();
+
+        _monitor = new NetworkMonitorService(_db, _geoIp);
         _cleanup = new LogCleanupService(_db);
 
         // Create ViewModel and MainWindow
@@ -31,6 +35,7 @@ public partial class App : Application
     {
         _monitor?.Dispose();
         _cleanup?.Dispose();
+        _geoIp?.Dispose();
         _db?.Dispose();
         base.OnExit(e);
     }

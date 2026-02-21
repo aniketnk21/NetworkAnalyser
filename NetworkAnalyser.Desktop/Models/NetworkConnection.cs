@@ -18,6 +18,7 @@ public partial class NetworkConnection : ObservableObject
     [ObservableProperty] private DateTime _timestamp = DateTime.Now;
     [ObservableProperty] private bool _isSuspicious;
     [ObservableProperty] private string _suspiciousReason = string.Empty;
+    [ObservableProperty] private string _remoteCountry = string.Empty;
 
     public string RemoteEndpoint => $"{RemoteAddress}:{RemotePort}";
     public string LocalEndpoint => $"{LocalAddress}:{LocalPort}";

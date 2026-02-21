@@ -13,6 +13,7 @@ public class NetworkMonitorService : IDisposable
 {
     private Timer? _pollTimer;
     private readonly DatabaseService _db;
+    private readonly GeoIpService _geoIp;
     private readonly Dictionary<string, NetworkConnection> _previousConnections = new();
     private bool _isMonitoring;
 
@@ -39,9 +40,10 @@ public class NetworkMonitorService : IDisposable
 
     public bool IsMonitoring => _isMonitoring;
 
-    public NetworkMonitorService(DatabaseService db)
+    public NetworkMonitorService(DatabaseService db, GeoIpService geoIp)
     {
         _db = db;
+        _geoIp = geoIp;
     }
 
     public void Start(int pollIntervalMs = 2000)
@@ -89,7 +91,8 @@ public class NetworkMonitorService : IDisposable
                         Action = conn.State == "ESTABLISHED" ? "Connected" : conn.State,
                         Timestamp = DateTime.Now,
                         Details = $"{conn.ProcessName} → {conn.RemoteAddress}:{conn.RemotePort} [{conn.State}]",
-                        IsSuspicious = conn.IsSuspicious
+                        IsSuspicious = conn.IsSuspicious,
+                        RemoteCountry = conn.RemoteCountry
                     };
                     _db.InsertTrafficLog(log);
                     NewTrafficLog?.Invoke(log);
@@ -111,7 +114,8 @@ public class NetworkMonitorService : IDisposable
                         Action = "Disconnected",
                         Timestamp = DateTime.Now,
                         Details = $"{conn.ProcessName} disconnected from {conn.RemoteAddress}:{conn.RemotePort}",
-                        IsSuspicious = conn.IsSuspicious
+                        IsSuspicious = conn.IsSuspicious,
+                        RemoteCountry = conn.RemoteCountry
                     };
                     _db.InsertTrafficLog(log);
                     NewTrafficLog?.Invoke(log);
@@ -230,7 +234,8 @@ public class NetworkMonitorService : IDisposable
                     RemotePort = row.RemotePort,
                     State = row.StateString,
                     Protocol = "TCP",
-                    Timestamp = DateTime.Now
+                    Timestamp = DateTime.Now,
+                    RemoteCountry = _geoIp.GetCountry(remoteAddr)
                 });
 
                 rowPtr += rowSize;
