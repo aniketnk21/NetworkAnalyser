@@ -1,6 +1,9 @@
 # NetworkAnalyser
 
 A real-time network traffic monitoring application for Windows that tracks active TCP connections, identifies suspicious activity, and provides detailed insights into network behavior.
+<img width="1102" height="800" alt="Networkanalyser" src="https://github.com/user-attachments/assets/7f6fe43c-c61b-4458-a2d9-7a3551e2b8a6" />
+
+
 
 ## Features
 
